@@ -12,20 +12,10 @@
 [ext_resource type="Texture2D" uid="uid://hee0q2yrjulr" path="res://images/white-transparent.png" id="11_hy0rb"]
 [ext_resource type="Texture2D" uid="uid://dkuccsljbuk5e" path="res://images/white16px.png" id="11_kogck"]
 
-[sub_resource type="GDScript" id="GDScript_pb8y7"]
-script/source = "@tool
-extends Resource
-class_name PolyominoShape
-
-@export var name: String = \"Unnamed\"
-@export var color: Color = Color.WHITE
-@export var cells: Array[Vector2i] = [] # relative coordinates
-@export var id: int = 0
-"
 
 [sub_resource type="Resource" id="Resource_574oa"]
 script = ExtResource("2_hy0rb")
-shapes = Array[SubResource("GDScript_pb8y7")]([ExtResource("4_d7v53"), ExtResource("5_0qmeg"), ExtResource("6_ta7ci"), ExtResource("7_lh335"), ExtResource("8_u6cys"), ExtResource("9_368ro"), ExtResource("10_3ca7f")])
+shapes = [ExtResource("4_d7v53"), ExtResource("5_0qmeg"), ExtResource("6_ta7ci"), ExtResource("7_lh335"), ExtResource("8_u6cys"), ExtResource("9_368ro"), ExtResource("10_3ca7f")]
 metadata/_custom_type_script = "uid://bt88jtvvciac4"
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_mxp4k"]
