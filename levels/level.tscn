@@ -1,0 +1,67 @@
+[gd_scene load_steps=18 format=3 uid="uid://dw8ja8jn04hiw"]
+
+[ext_resource type="Script" uid="uid://bbktpwg1shk66" path="res://levels/level.gd" id="1_pb8y7"]
+[ext_resource type="Script" uid="uid://bt88jtvvciac4" path="res://levels/level_data.gd" id="2_hy0rb"]
+[ext_resource type="Resource" uid="uid://lr55h8hihhad" path="res://shapes/I_shape.tres" id="4_d7v53"]
+[ext_resource type="Resource" uid="uid://8t8po8a6djae" path="res://shapes/J_shape.tres" id="5_0qmeg"]
+[ext_resource type="Resource" uid="uid://bbcwtdlg7e82l" path="res://shapes/L_shape.tres" id="6_ta7ci"]
+[ext_resource type="Resource" uid="uid://by572sdanx3xg" path="res://shapes/O_shape.tres" id="7_lh335"]
+[ext_resource type="Resource" uid="uid://fbxlkm36x656" path="res://shapes/S_shape.tres" id="8_u6cys"]
+[ext_resource type="Resource" uid="uid://l4crsksl7uke" path="res://shapes/T_shape.tres" id="9_368ro"]
+[ext_resource type="Resource" uid="uid://6dpcryjdcv11" path="res://shapes/Z_shape.tres" id="10_3ca7f"]
+[ext_resource type="Texture2D" uid="uid://hee0q2yrjulr" path="res://images/white-transparent.png" id="11_hy0rb"]
+[ext_resource type="Texture2D" uid="uid://dkuccsljbuk5e" path="res://images/white16px.png" id="11_kogck"]
+
+[sub_resource type="GDScript" id="GDScript_pb8y7"]
+script/source = "@tool
+extends Resource
+class_name PolyominoShape
+
+@export var name: String = \"Unnamed\"
+@export var color: Color = Color.WHITE
+@export var cells: Array[Vector2i] = [] # relative coordinates
+@export var id: int = 0
+"
+
+[sub_resource type="Resource" id="Resource_574oa"]
+script = ExtResource("2_hy0rb")
+shapes = Array[SubResource("GDScript_pb8y7")]([ExtResource("4_d7v53"), ExtResource("5_0qmeg"), ExtResource("6_ta7ci"), ExtResource("7_lh335"), ExtResource("8_u6cys"), ExtResource("9_368ro"), ExtResource("10_3ca7f")])
+metadata/_custom_type_script = "uid://bt88jtvvciac4"
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_mxp4k"]
+texture = ExtResource("11_hy0rb")
+0:0/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_d7v53"]
+sources/0 = SubResource("TileSetAtlasSource_mxp4k")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_tn76l"]
+texture = ExtResource("11_kogck")
+0:0/next_alternative_id = 9
+0:0/0 = 0
+0:0/1 = 1
+0:0/1/modulate = Color(0.69411767, 0.24313726, 0.3254902, 1)
+0:0/2 = 2
+0:0/2/modulate = Color(1, 0.8039216, 0.45882353, 1)
+0:0/3 = 3
+0:0/3/modulate = Color(0.654902, 0.9411765, 0.4392157, 1)
+0:0/4 = 4
+0:0/4/modulate = Color(0.14509805, 0.44313726, 0.4745098, 1)
+0:0/5 = 5
+0:0/5/modulate = Color(0.23137255, 0.3647059, 0.7882353, 1)
+0:0/6 = 6
+0:0/6/modulate = Color(0.9372549, 0.49019608, 0.34117648, 1)
+
+[sub_resource type="TileSet" id="TileSet_werwd"]
+sources/0 = SubResource("TileSetAtlasSource_tn76l")
+
+[node name="Level" type="Node2D"]
+script = ExtResource("1_pb8y7")
+level_data = SubResource("Resource_574oa")
+
+[node name="BackgroundLayer" type="TileMapLayer" parent="."]
+tile_set = SubResource("TileSet_d7v53")
+
+[node name="BoardLayer" type="TileMapLayer" parent="."]
+use_parent_material = true
+tile_set = SubResource("TileSet_werwd")

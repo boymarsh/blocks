@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="PolyominoShape" load_steps=2 format=3 uid="uid://8t8po8a6djae"]
+
+[ext_resource type="Script" uid="uid://dw13duhls62rj" path="res://shapes/polyomino_shape.gd" id="1_jf38u"]
+
+[resource]
+script = ExtResource("1_jf38u")
+name = "J"
+color = Color(0.9372549, 0.49019608, 0.34117648, 1)
+cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1)])
+id = 3
+metadata/_custom_type_script = "uid://dw13duhls62rj"
