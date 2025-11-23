@@ -1,0 +1,19 @@
+[gd_resource type="TileSet" load_steps=3 format=3 uid="uid://c0l3s2myehx8h"]
+
+[ext_resource type="Texture2D" uid="uid://dcvnq81p1xifw" path="res://images/shadow-block-1.png" id="1_ps11k"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_xgw2e"]
+texture = ExtResource("1_ps11k")
+texture_region_size = Vector2i(64, 64)
+0:0/0 = 0
+1:0/0 = 0
+2:0/0 = 0
+3:0/0 = 0
+4:0/0 = 0
+5:0/0 = 0
+6:0/0 = 0
+7:0/0 = 0
+
+[resource]
+tile_size = Vector2i(64, 64)
+sources/1 = SubResource("TileSetAtlasSource_xgw2e")
