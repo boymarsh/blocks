@@ -1,7 +1,6 @@
 extends Node2D
 
 @export var level_data: LevelData
-
 @onready var tilemap: TileMapLayer = $BoardLayer
 @onready var background := $BackgroundLayer
 
@@ -13,14 +12,12 @@ var width: int
 var height: int
 var spawn_rows: int
 var shapes: Array[PolyominoShape] = []
-
 var grid: Array = [] # 2D [y][x], runtime only
 var active_pieces: Array = [] # later: Array[Piece]
 
 class Piece:
     var shape: PolyominoShape
     var pos: Vector2i
-
     func _init(p_shape: PolyominoShape, p_pos: Vector2i) -> void:
         shape = p_shape
         pos = p_pos
