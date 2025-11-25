@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://bd7oh1txs0g26"]
+[gd_scene load_steps=18 format=3 uid="uid://bd7oh1txs0g26"]
 
 [ext_resource type="Script" uid="uid://b6aqtdciftwe7" path="res://levels/game_board.gd" id="1_xgw2e"]
 [ext_resource type="Script" uid="uid://bt88jtvvciac4" path="res://levels/level_data.gd" id="2_e5fk4"]
@@ -12,6 +12,7 @@
 [ext_resource type="Resource" uid="uid://l4crsksl7uke" path="res://shapes/T_shape.tres" id="9_0lqb1"]
 [ext_resource type="Resource" uid="uid://6dpcryjdcv11" path="res://shapes/Z_shape.tres" id="10_s01nf"]
 [ext_resource type="Texture2D" uid="uid://bkjj6by5jl45e" path="res://images/background64.png" id="11_67wtr"]
+[ext_resource type="Material" uid="uid://bdpvij3704qou" path="res://shaders/highlight_shader.tres" id="13_epimc"]
 
 [sub_resource type="Resource" id="Resource_6thiv"]
 script = ExtResource("2_e5fk4")
@@ -27,6 +28,10 @@ texture_region_size = Vector2i(64, 64)
 tile_size = Vector2i(64, 64)
 sources/0 = SubResource("TileSetAtlasSource_epimc")
 
+[sub_resource type="Environment" id="Environment_epimc"]
+background_mode = 3
+glow_enabled = true
+
 [node name="GameBoard" type="Node2D"]
 script = ExtResource("1_xgw2e")
 level_data = SubResource("Resource_6thiv")
@@ -38,6 +43,10 @@ tile_set = SubResource("TileSet_e5fk4")
 tile_set = ExtResource("2_onlo0")
 
 [node name="HighlightLayer" type="TileMapLayer" parent="."]
+material = ExtResource("13_epimc")
 tile_set = ExtResource("2_onlo0")
 
 [node name="EffectLayer" type="TileMapLayer" parent="."]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_epimc")

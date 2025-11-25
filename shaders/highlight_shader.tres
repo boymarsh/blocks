@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://bdpvij3704qou"]
+
+[ext_resource type="Shader" uid="uid://dgaana42t6b7b" path="res://shaders/highlight_tiles.gdshader" id="1_21l23"]
+
+[resource]
+shader = ExtResource("1_21l23")
+shader_parameter/alpha_mult = 0.2000000095
+shader_parameter/inner_tint = Color(1.1, 1.1, 1.1, 1)
+shader_parameter/outline_color = Color(2, 1.6, 2, 1)
+shader_parameter/outline_size = 1.0
+shader_parameter/saturation_boost = 1.4
