@@ -11,6 +11,13 @@ enum Rotation {
     TWICE = 2
 }
 
+enum Direction {
+    LEFT = 0,
+    RIGHT = 1,
+    UP = 2,
+    DOWN = 3
+}
+
 func _init(p_shape: PolyominoShape, p_position: Vector2i) -> void:
     shape = p_shape
     position = p_position
@@ -50,6 +57,27 @@ func rotate_around_cell(pivot_cell_index: int, direction: Rotation) -> Array:
 
     return [out_cells, position_after]
 
+func move_piece(direction: Direction, steps: int = 1) -> Vector2i:
+    match direction:
+        Direction.LEFT:
+            return position + Vector2i(-steps, 0)
+        Direction.RIGHT:
+            return position + Vector2i(steps, 0)
+        Direction.UP:
+            return position + Vector2i(0, -steps)
+        Direction.DOWN:
+            return position + Vector2i(0, steps)
+        _:
+            push_error("Invalid Rotation Direction")
+            return position
+
+        
 func update_cells_and_position(new_cells: Array[Vector2i], new_position: Vector2i) -> void:
     cells = new_cells.duplicate()
     position = new_position
+
+func get_board_position() -> Array[Vector2i]:
+    var board_position: Array[Vector2i] = []
+    for cell in cells:
+        board_position.append(Vector2i(cell[0] + position[0], cell[1] + position[1]))
+    return board_position

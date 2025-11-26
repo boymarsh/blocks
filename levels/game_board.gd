@@ -54,16 +54,17 @@ func place_background() -> void:
 			background_layer.set_cell(Vector2i(i, j), BACKGROUND_SOURCE, Vector2i(0, 0), 0)
 
 func place_piece(piece: Piece) -> void:
-	for cell in piece.cells:
-		var y_offset = piece.position[0]
-		var x_offset = piece.position[1]
-		pieces_layer.set_cell(Vector2i(cell[0] + y_offset, cell[1] + x_offset), PIECE_SOURCE, Vector2i(0, 0), 0)
+	print("POS", piece.position)
+	print("CELL", piece.cells)
+	print("BOARD", piece.get_board_position())
+	for cell in piece.get_board_position():
+		# var y_offset = piece.position[0]
+		# var x_offset = piece.position[1]
+		pieces_layer.set_cell(cell, PIECE_SOURCE, Vector2i(0, 0), 0)
 	
 func remove_piece(piece: Piece) -> void:
-	var y_offset = piece.position[0]
-	var x_offset = piece.position[1]
-	for cell in piece.cells:
-		pieces_layer.erase_cell(Vector2i(cell[0] + y_offset, cell[1] + x_offset))
+	for cell in piece.get_board_position():
+		pieces_layer.erase_cell(cell)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_echo():
@@ -72,10 +73,18 @@ func _unhandled_input(event: InputEvent) -> void:
 		rotate_piece(active_piece, Piece.Rotation.LEFT)
 	if event.is_action_pressed("rotate_right"):
 		rotate_piece(active_piece, Piece.Rotation.RIGHT)
+	if event.is_action_pressed("move_down"):
+		move_piece(active_piece, Piece.Direction.DOWN)
+	if event.is_action_pressed("move_right"):
+		move_piece(active_piece, Piece.Direction.RIGHT)
+	if event.is_action_pressed("move_left"):
+		move_piece(active_piece, Piece.Direction.LEFT)
+	if event.is_action_pressed("move_up"):
+		move_piece(active_piece, Piece.Direction.UP)
 
 func rotate_piece(piece: Piece, rotation_direction: Piece.Rotation):
 	remove_piece(piece)
-	print("OLD", piece.cells)
+	#print("OLD", piece.cells)
 	
 	var new_cell_data = piece.rotate_around_cell(1, rotation_direction)
 	var new_cells: Array[Vector2i] = new_cell_data[0]
@@ -84,5 +93,11 @@ func rotate_piece(piece: Piece, rotation_direction: Piece.Rotation):
 	piece.position = new_position
 	
 	place_piece(piece)
-	print("NEW", piece.cells)
+
+func move_piece(piece: Piece, move_direction: Piece.Direction):
+	var new_position = piece.move_piece(move_direction, 1)
+	remove_piece(piece)
+	print("MOVE POS", piece.position)
+	piece.position = new_position
+	print("MOVE NEW POS", piece.position)
 	place_piece(piece)
