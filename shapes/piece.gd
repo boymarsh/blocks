@@ -4,6 +4,7 @@ class_name Piece
 var shape: PolyominoShape
 var position: Vector2i
 var cells: Array[Vector2i]
+var id: int
 
 enum Rotation {
     LEFT = 0,
@@ -18,10 +19,11 @@ enum Direction {
     DOWN = 3
 }
 
-func _init(p_shape: PolyominoShape, p_position: Vector2i) -> void:
+func _init(p_shape: PolyominoShape, p_position: Vector2i, p_id: int = 0) -> void:
     shape = p_shape
     position = p_position
     cells = shape.cells.duplicate()
+    id = p_id
 
 func rotate_cell(cell_pos: Vector2i, direction: Rotation) -> Vector2i:
     match direction:

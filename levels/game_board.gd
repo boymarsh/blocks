@@ -1,53 +1,65 @@
 extends Node2D
 
 @export var level_data: LevelData
+@onready var camera: Camera2D = $Camera2D
 
 var pieces_layer: TileMapLayer
 var background_layer: TileMapLayer
 var highlight_layer: TileMapLayer
 const BACKGROUND_SOURCE = 0
 const PIECE_SOURCE = 1
+const OUTLINE_SOURCE = 0
+@export var zoom_modifier = 0.9
 var active_piece: Piece
+var possible_pieces: Array[Piece]
+var pieces: Array[Piece]
 
 
 func _ready() -> void:
-	# test code	
-	#var source_id: int = 1
-	pieces_layer = $PiecesLayer
-	background_layer = $BackgroundLayer
-	highlight_layer = $HighlightLayer
-
-	#var pieces_ts: TileSet = pieces_layer.tile_set
-	#var pieces_source := pieces_ts.get_source(source_id) as TileSetAtlasSource
-	#var tile_count: int = pieces_source.get_tiles_count()
-	#print("tile_count =", tile_count)
-	# for i in tile_count:
-	# 	var pieces_atlas_coords: Vector2i = pieces_source.get_tile_id(i)
-	# 	print("tile", i, "atlas coords:", pieces_atlas_coords)
-
-	# 	pieces_layer.set_cell(Vector2i(i, 0), source_id, pieces_atlas_coords, 0)
-
-	# var h_ts: TileSet = highlight_layer.tile_set
-	# var h_source := h_ts.get_source(source_id) as TileSetAtlasSource
-	# var h_tile_count: int = h_source.get_tiles_count()
-	# print("h_tile_count =", h_tile_count)
-	# for i in h_tile_count:
-	# 	var h_atlas_coords: Vector2i = h_source.get_tile_id(i)
-	# 	print("tile", i, "atlas coords:", h_atlas_coords)
-
-	# 	highlight_layer.set_cell(Vector2i(i, 4), source_id, h_atlas_coords, 0)
+	camera.make_current()
+	_initialise_board()
+	_fit_camera_to_board()
 	
-	# for i in range(level_data.width):
-	# 	for j in range(level_data.height):
-	# 		background_layer.set_cell(Vector2i(i, j), BACKGROUND_SOURCE, Vector2i(0, 0), 0)
-
-	var test_piece: Piece = Piece.new(level_data.shapes[5], Vector2i(3, 3))
+	#var test_piece: Piece = Piece.new(level_data.shapes[5], Vector2i(3, 3))
+	var test_piece: Piece = possible_pieces[6]
+	test_piece.position = Vector2i(3, 3)
 	print(test_piece.cells)
-	place_background()
 	place_piece(test_piece)
 
 	active_piece = test_piece
 
+func _initialise_board() -> void:
+	pieces_layer = $PiecesLayer
+	background_layer = $BackgroundLayer
+	highlight_layer = $HighlightLayer
+	for i in range(len(level_data.shapes)):
+			possible_pieces.append(Piece.new(level_data.shapes[i], Vector2i(0, 0), i))
+	place_background()
+
+func _fit_camera_to_board() -> void:
+	# Tile size in pixels
+	var tile_size: Vector2 = Vector2(pieces_layer.tile_set.tile_size)
+
+	# Board size in pixels
+	var board_px_size := Vector2(
+		level_data.width * tile_size.x,
+		level_data.height * tile_size.y
+	)
+
+	# Center the camera on the board
+	camera.position = board_px_size / 2.0
+
+	# Viewport size in pixels
+	var viewport_size: Vector2 = get_viewport_rect().size
+
+	var zoom_factor: float = min(
+		viewport_size.x / board_px_size.x,
+		viewport_size.y / board_px_size.y
+	)
+	zoom_factor *= zoom_modifier
+	camera.zoom = Vector2(zoom_factor, zoom_factor)
+	
+	
 func place_background() -> void:
 	for i in range(level_data.width):
 		for j in range(level_data.height):
@@ -60,7 +72,7 @@ func place_piece(piece: Piece) -> void:
 	for cell in piece.get_board_position():
 		# var y_offset = piece.position[0]
 		# var x_offset = piece.position[1]
-		pieces_layer.set_cell(cell, PIECE_SOURCE, Vector2i(0, 0), 0)
+		pieces_layer.set_cell(cell, PIECE_SOURCE, Vector2i(piece.id, 0), 0)
 	
 func remove_piece(piece: Piece) -> void:
 	for cell in piece.get_board_position():
