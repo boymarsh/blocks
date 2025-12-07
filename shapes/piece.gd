@@ -25,6 +25,14 @@ func _init(p_shape: PolyominoShape, p_position: Vector2i, p_id: int = 0) -> void
     cells = shape.cells.duplicate()
     id = p_id
 
+static func blank_piece() -> Piece:
+    var blank_shape := PolyominoShape.new()
+    blank_shape.cells = []
+
+    var p = Piece.new(blank_shape, Vector2i.ZERO, -1)
+    p.cells.clear()
+    return p
+
 func rotate_cell(cell_pos: Vector2i, direction: Rotation) -> Vector2i:
     match direction:
         Rotation.RIGHT:
