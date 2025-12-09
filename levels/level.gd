@@ -16,7 +16,7 @@ func _ready() -> void:
 	offset_top = 0
 	offset_right = 0
 	offset_bottom = 0
-	size = get_viewport_rect().size
+	#size = get_viewport_rect().size
 
 	# 2) BoardContainer fills the root
 	_board_container_set_full_size()
