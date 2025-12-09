@@ -4,8 +4,8 @@
 
 [resource]
 shader = ExtResource("1_21l23")
-shader_parameter/alpha_mult = 0.2000000095
-shader_parameter/inner_tint = Color(1.1, 1.1, 1.1, 1)
-shader_parameter/outline_color = Color(2, 1.6, 2, 1)
-shader_parameter/outline_size = 1.0
+shader_parameter/alpha_mult = 0.6
+shader_parameter/inner_tint = Color(0.8573992, 0.0006345225, 0.8667467, 1)
+shader_parameter/outline_color = Color(0.3758693, 0.00013003501, 0.3917224, 1)
+shader_parameter/outline_size = 1.0000000475
 shader_parameter/saturation_boost = 1.4

@@ -1,4 +1,5 @@
 shader_type canvas_item;
+render_mode blend_add;
 
 // overall alpha of the highlight
 uniform float alpha_mult : hint_range(0.0, 1.0) = 0.6;

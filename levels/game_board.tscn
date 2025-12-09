@@ -1,4 +1,4 @@
-[gd_scene load_steps=23 format=3 uid="uid://bd7oh1txs0g26"]
+[gd_scene load_steps=29 format=3 uid="uid://bd7oh1txs0g26"]
 
 [ext_resource type="Script" uid="uid://b6aqtdciftwe7" path="res://levels/game_board.gd" id="1_xgw2e"]
 [ext_resource type="Script" uid="uid://bt88jtvvciac4" path="res://levels/level_data.gd" id="2_e5fk4"]
@@ -15,6 +15,7 @@
 [ext_resource type="Texture2D" uid="uid://cg68qwk8iesce" path="res://images/background64_bordeless.png" id="11_56hot"]
 [ext_resource type="Material" uid="uid://bdpvij3704qou" path="res://shaders/highlight_shader.tres" id="13_epimc"]
 [ext_resource type="Texture2D" uid="uid://d1q0hfeujc08o" path="res://images/outlines.png" id="14_56hot"]
+[ext_resource type="Texture2D" uid="uid://b1wjepp30n11m" path="res://images/red_green_dots.png" id="15_vgcke"]
 
 [sub_resource type="Resource" id="Resource_6thiv"]
 script = ExtResource("2_e5fk4")
@@ -38,6 +39,31 @@ texture_region_size = Vector2i(64, 64)
 tile_size = Vector2i(64, 64)
 sources/0 = SubResource("TileSetAtlasSource_epimc")
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_5c8fc"]
+shader = ExtResource("11_5c8fc")
+shader_parameter/base_color = Color(0.3372549, 0.42352942, 0.5254902, 1)
+shader_parameter/border_color = Color(0, 0, 0, 1)
+shader_parameter/border_thickness = 0.06
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_vgcke"]
+texture = ExtResource("11_56hot")
+texture_region_size = Vector2i(64, 64)
+0:0/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_hge7n"]
+tile_size = Vector2i(64, 64)
+sources/1 = SubResource("TileSetAtlasSource_vgcke")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_hge7n"]
+texture = ExtResource("15_vgcke")
+texture_region_size = Vector2i(64, 64)
+0:0/0 = 0
+1:0/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_0lqb1"]
+tile_size = Vector2i(64, 64)
+sources/0 = SubResource("TileSetAtlasSource_hge7n")
+
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_5c8fc"]
 texture = ExtResource("14_56hot")
 texture_region_size = Vector2i(64, 64)
@@ -51,17 +77,22 @@ sources/0 = SubResource("TileSetAtlasSource_5c8fc")
 [sub_resource type="Environment" id="Environment_epimc"]
 background_mode = 3
 glow_enabled = true
+glow_intensity = 2.78
+glow_strength = 1.67
 
 [node name="GameBoard" type="Node2D"]
 script = ExtResource("1_xgw2e")
 level_data = SubResource("Resource_6thiv")
-zoom_modifier = null
 
 [node name="BackgroundLayer" type="TileMapLayer" parent="."]
 texture_filter = 1
 texture_repeat = 1
 material = SubResource("ShaderMaterial_vgcke")
 tile_set = SubResource("TileSet_e5fk4")
+
+[node name="FrozenLayer" type="TileMapLayer" parent="."]
+material = SubResource("ShaderMaterial_5c8fc")
+tile_set = SubResource("TileSet_hge7n")
 
 [node name="PiecesLayer" type="TileMapLayer" parent="."]
 texture_filter = 1
@@ -73,6 +104,9 @@ texture_filter = 1
 texture_repeat = 1
 material = ExtResource("13_epimc")
 tile_set = ExtResource("2_onlo0")
+
+[node name="SelectionLayer" type="TileMapLayer" parent="."]
+tile_set = SubResource("TileSet_0lqb1")
 
 [node name="OutlineLayer" type="TileMapLayer" parent="."]
 texture_filter = 1
