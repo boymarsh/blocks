@@ -18,14 +18,12 @@ var background_layer: TileMapLayer
 var highlight_layer: TileMapLayer
 var outline_layer: TileMapLayer
 var frozen_layer: TileMapLayer
-var selection_layer: TileMapLayer
 var inactive_outline_layer: TileMapLayer
 const BACKGROUND_SOURCE = 0
 const PIECE_SOURCE = 1
 const OUTLINE_SOURCE = 0
 const FROZEN_SOURCE = 1
 const HIGHLIGHT_SOURCE = 1
-const SELECTION_SOURCE = 0
 const INACTIVE_SOURCE = 0
 var active_piece: Piece
 var outline_piece: Piece
@@ -73,7 +71,6 @@ func _initialise_board() -> void:
 	highlight_layer = $HighlightLayer
 	outline_layer = $OutlineLayer
 	frozen_layer = $FrozenLayer
-	selection_layer = $SelectionLayer
 	inactive_outline_layer = $InactiveOutlineLayer
 
 	for i in range(len(level_data.shapes)):
@@ -84,7 +81,7 @@ func intialise_pieces():
 	highlight_active_piece()
 	inactive_piece_outlines()
 	initialise_outline_piece()
-	highlight_pivot_cell()
+	#highlight_pivot_cell()
 
 func place_background() -> void:
 	for i in range(level_data.width):
@@ -99,32 +96,27 @@ func place_cells(cells: Array[Vector2i], layer: TileMapLayer, source: int, tile_
 		layer.set_cell(cell, source, Vector2i(tile_index, 0), 0)
 
 
-func place_outline(piece: Piece):
+func place_outline(piece: Piece) -> void:
 	outline_layer.clear()
 	var unblocked_pieces: Array[Vector2i] = []
 	var blocked_pieces: Array[Vector2i] = []
 	
-	for cell in piece.get_board_position():
-		if cell_occupied(cell):
-			blocked_pieces.append(cell)
-		else:
+	for cell: Vector2i in piece.get_board_position():
+		if are_cells_legal([cell]):
 			unblocked_pieces.append(cell)
+		else:
+			blocked_pieces.append(cell)
 
 	place_cells(unblocked_pieces, outline_layer, OUTLINE_SOURCE, 1) # green outline
 	place_cells(blocked_pieces, outline_layer, OUTLINE_SOURCE, 0) # red outline
 
-func remove_piece(piece: Piece, layer: TileMapLayer) -> void:
-	for cell in piece.get_board_position():
-		layer.erase_cell(cell)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_echo():
 		return
 	if event.is_action_pressed("rotate_left"):
-		#rotate_piece(active_piece, Piece.Rotation.LEFT)
 		rotate_outline_piece(Piece.Rotation.LEFT)
 	if event.is_action_pressed("rotate_right"):
-		#rotate_piece(active_piece, Piece.Rotation.RIGHT)
 		rotate_outline_piece(Piece.Rotation.RIGHT)
 	if event.is_action_pressed("move_right"):
 		move_outline_piece(Piece.Direction.RIGHT)
@@ -146,6 +138,8 @@ func commit_move():
 	# Update active piece in place
 	active_piece.cells = outline_piece.cells.duplicate()
 	active_piece.position = outline_piece.position
+	active_piece.rotation_state = outline_piece.rotation_state
+
 
 	# Move inactive pieces down by 1
 	for piece in get_inactive_pieces():
@@ -253,7 +247,7 @@ func active_piece_selection(cell: Vector2i) -> void:
 		if cell_location != -1:
 			print("PIECE CLICKED")
 			active_piece = piece
-			piece.pivot_cell = cell_location
+			#piece.pivot_cell = cell_location
 			found_cell = true
 			break
 	
@@ -273,16 +267,6 @@ func highlight_active_piece() -> void:
 	var active_board_cells: Array[Vector2i] = active_piece.get_board_position()
 	place_cells(active_board_cells, highlight_layer, HIGHLIGHT_SOURCE, active_piece.id)
 	
-func highlight_pivot_cell() -> void:
-	selection_layer.clear()
-	var active_board_cells: Array[Vector2i] = active_piece.get_board_position()
-	var pivot_cell_only: Array[Vector2i] = [active_board_cells[active_piece.pivot_cell]]
-	place_cells(pivot_cell_only, selection_layer, SELECTION_SOURCE, 1) # green
-	
-	var outline_board_cells: Array[Vector2i] = outline_piece.get_board_position()
-	if len(outline_board_cells) > 0:
-		var outline_pivot_only: Array[Vector2i] = [outline_board_cells[outline_piece.pivot_cell]]
-		place_cells(outline_pivot_only, selection_layer, SELECTION_SOURCE, 0) # red
 
 func initialise_outline_piece() -> void:
 	outline_layer.clear()
@@ -290,35 +274,6 @@ func initialise_outline_piece() -> void:
 	outline_piece.position[1] += 1 # move down 1
 	reset_rotation_translation_plan()
 	place_outline(outline_piece)
-
-func rotate_piece(piece: Piece, rotation_direction: Piece.Rotation):
-	remove_piece(outline_piece, outline_layer)
-	var new_cell_data = piece.rotate_around_cell(0, rotation_direction)
-	var new_cells: Array[Vector2i] = new_cell_data[0]
-	var new_position: Vector2i = new_cell_data[1]
-	new_position[1] += 1 # drop by 1
-	outline_piece.cells = new_cells.duplicate()
-	outline_piece.position = new_position
-	place_outline(outline_piece)
-
-# TO REMOVE ONCE ALL THE PROPOSED PIECE STUFF IS IN PLACE
-func rotate_piece_old(piece: Piece, rotation_direction: Piece.Rotation):
-	remove_piece(piece, pieces_layer)
-	var new_cell_data = piece.rotate_around_cell(0, rotation_direction)
-	var new_cells: Array[Vector2i] = new_cell_data[0]
-	var new_position: Vector2i = new_cell_data[1]
-	piece.cells = new_cells.duplicate()
-	piece.position = new_position
-	place_piece(piece)
-
-func move_piece(piece: Piece, move_direction: Piece.Direction):
-	var new_position = piece.move_piece(move_direction, 1)
-	remove_piece(piece, pieces_layer)
-	print("MOVE POS", piece.position)
-	piece.position = new_position
-	print("MOVE NEW POS", piece.position)
-	place_piece(piece)
-	highlight_pivot_cell() # re-do pivot cell
 
 func rebuild_outline_from_plan() -> void:
 	outline_layer.clear()
@@ -330,28 +285,32 @@ func rebuild_outline_from_plan() -> void:
 	# Apply horizontal translation plan
 	outline_piece.position.x += plan_translation_x
 
-	# Apply rotation plan
-	var steps := plan_rotation_steps
+	# Apply rotation plan using SRS (pivot + kicks)
+	var rotation_steps_to_apply: int = plan_rotation_steps
 
-	if steps > 0:
-		for i in range(steps):
-			var result = outline_piece.rotate_around_cell(outline_piece.pivot_cell, Piece.Rotation.RIGHT)
-			outline_piece.cells = (result[0] as Array[Vector2i]).duplicate()
-			outline_piece.position = result[1]
-	elif steps < 0:
-		for i in range(-steps):
-			var result = outline_piece.rotate_around_cell(outline_piece.pivot_cell, Piece.Rotation.LEFT)
-			outline_piece.cells = (result[0] as Array[Vector2i]).duplicate()
-			outline_piece.position = result[1]
+	if rotation_steps_to_apply > 0:
+		for step_index: int in range(rotation_steps_to_apply):
+			var rotation_succeeded: bool = outline_piece.try_rotate_srs(
+				Piece.Rotation.RIGHT,
+				Callable(self, "are_cells_legal")
+			)
+			if not rotation_succeeded:
+				break
+	elif rotation_steps_to_apply < 0:
+		for step_index: int in range(-rotation_steps_to_apply):
+			var rotation_succeeded: bool = outline_piece.try_rotate_srs(
+				Piece.Rotation.LEFT,
+				Callable(self, "are_cells_legal")
+			)
+			if not rotation_succeeded:
+				break
 
 	place_outline(outline_piece)
-	highlight_pivot_cell()
+	#highlight_pivot_cell()
 
 func validate_piece_position(piece: Piece) -> bool:
-	for cell in piece.get_board_position():
-		if cell_occupied(cell):
-			return false
-	return true
+	var piece_world_cells: Array[Vector2i] = piece.get_board_position()
+	return are_cells_legal(piece_world_cells)
 
 func cell_occupied(cell: Vector2i, layers: Array[TileMapLayer] = []) -> bool:
 	if layers.is_empty():
@@ -384,3 +343,13 @@ func inactive_piece_outlines():
 	for cell in get_inactive_board_cells():
 		cells_below.append(Vector2i(cell[0], cell[1] + 1))
 	place_cells(cells_below, inactive_outline_layer, INACTIVE_SOURCE, 0)
+
+func are_cells_legal(cells: Array[Vector2i]) -> bool:
+	for cell in cells:
+		if cell.x < 0 or cell.x >= level_data.width:
+			return false
+		if cell.y < 0 or cell.y >= level_data.height:
+			return false
+		if cell_occupied(cell):
+			return false
+	return true

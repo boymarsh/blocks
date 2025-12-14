@@ -8,4 +8,6 @@ name = "L"
 color = Color(0.654902, 0.9411765, 0.4392157, 1)
 cells = Array[Vector2i]([Vector2i(2, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1)])
 id = 4
+pivot = Vector2(1, 1)
+kick_profile = 1
 metadata/_custom_type_script = "uid://dw13duhls62rj"

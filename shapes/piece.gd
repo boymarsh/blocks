@@ -5,7 +5,8 @@ var shape: PolyominoShape
 var position: Vector2i
 var cells: Array[Vector2i]
 var id: int
-var pivot_cell: int = 0
+var rotation_state: int = 0
+
 
 enum Rotation {
     LEFT = 0,
@@ -20,12 +21,12 @@ enum Direction {
     DOWN = 3
 }
 
-func _init(p_shape: PolyominoShape, p_position: Vector2i, p_id: int = 0, pivot: int = 0) -> void:
+func _init(p_shape: PolyominoShape, p_position: Vector2i, p_id: int = 0) -> void:
     shape = p_shape
     position = p_position
     cells = shape.cells.duplicate()
     id = p_id
-    pivot_cell = pivot
+    #pivot_cell = pivot
 
 static func blank_piece() -> Piece:
     var blank_shape := PolyominoShape.new()
@@ -36,125 +37,12 @@ static func blank_piece() -> Piece:
     return p
 
 func copy() -> Piece:
-    var p := Piece.new(shape, position, id, pivot_cell)
+    var p := Piece.new(shape, position, id)
     p.cells = cells.duplicate() # keep current orientation, not shape.cells
+    p.rotation_state = rotation_state
     return p
 
-func rotate_cell(cell_pos: Vector2i, direction: Rotation) -> Vector2i:
-    match direction:
-        Rotation.RIGHT:
-            return Vector2i(cell_pos.y, -cell_pos.x)
-        Rotation.LEFT:
-            return Vector2i(-cell_pos.y, cell_pos.x)
-        Rotation.TWICE:
-            return Vector2i(-cell_pos.x, -cell_pos.y)
-        _:
-            push_error("Invalid Rotation Direction")
-            return cell_pos
 
-func rotate_around_cell(pivot_cell_index: int, direction: Rotation) -> Array:
-    """
-    Returns [new_cells, new_position] after rotating the piece around the
-    given pivot cell. The pivot cell's *world* position (and its local
-    coordinates) remain fixed.
-    """
-    if pivot_cell_index < 0 or pivot_cell_index >= cells.size():
-        push_error("invalid cell index %s" % [str(pivot_cell_index)])
-        return [cells.duplicate(), position]
-
-    var pivot_local: Vector2i = cells[pivot_cell_index]
-
-    var out_cells: Array[Vector2i] = []
-    out_cells.resize(cells.size())
-
-    # Rotate every cell around the pivot in local space
-    for i in cells.size():
-        var local: Vector2i = cells[i]
-        var relative: Vector2i = local - pivot_local # shift so pivot is at (0,0)
-        var rotated_relative: Vector2i = rotate_cell(relative, direction)
-        out_cells[i] = pivot_local + rotated_relative # shift back
-
-    # Position does NOT change – we rotated in local space around the pivot
-    var position_after: Vector2i = position
-
-    # Optional sanity check: pivot world pos should be identical
-    var pivot_world_before: Vector2i = position + cells[pivot_cell_index]
-    var pivot_world_after: Vector2i = position_after + out_cells[pivot_cell_index]
-    if pivot_world_before != pivot_world_after:
-        push_error("Pivot drift! before=%s after=%s"
-            % [str(pivot_world_before), str(pivot_world_after)])
-
-    return [out_cells, position_after]
-
-
-# func rotate_around_cell(pivot_cell_index: int, direction: Rotation) -> Array:
-#     """
-#     Returns [rotated_cells, new_position] after rotating the piece
-#     around the given pivot cell. The pivot cell's *world* position
-#     should remain identical before and after the rotation.
-#     """
-#     var out_cells: Array[Vector2i] = cells.duplicate()
-
-#     if pivot_cell_index < 0 or pivot_cell_index >= cells.size():
-#         push_error("invalid cell index %s" % [str(pivot_cell_index)])
-#         return [cells.duplicate(), position]
-
-#     var pivot_cell_local_before: Vector2i = cells[pivot_cell_index]
-#     var pivot_cell_world_before: Vector2i = position + pivot_cell_local_before
-
-#     # Rotate all local cell positions around (0,0)
-#     for i in out_cells.size():
-#         out_cells[i] = rotate_cell(out_cells[i], direction)
-
-#     var pivot_cell_local_after: Vector2i = out_cells[pivot_cell_index]
-#     var position_after: Vector2i = pivot_cell_world_before - pivot_cell_local_after
-
-#     # --- debug check: did the pivot move in world space? ---
-#     var pivot_cell_world_after: Vector2i = position_after + out_cells[pivot_cell_index]
-#     if pivot_cell_world_before != pivot_cell_world_after:
-#         push_error("Pivot drift! before=%s after=%s"
-#             % [str(pivot_cell_world_before), str(pivot_cell_world_after)])
-
-#     return [out_cells, position_after]
-
-
-# func rotate_around_cell(pivot_cell_index: int, direction: Rotation) -> Array:
-#     """
-#     Returns positions and array of cells after a given rotation around a spefic cell. This returns
-#     the details of what the proposed rotation would result in, it doesn't apply it to the piece.
-#     """
-#     var out_cells: Array[Vector2i] = cells.duplicate()
-
-#     if pivot_cell_index < 0 or pivot_cell_index >= cells.size():
-#         push_error("invalid cell index %s" % [str(pivot_cell_index)])
-#         return [cells.duplicate(), position]
-    
-#     var pivot_cell_local_before: Vector2i = cells[pivot_cell_index]
-#     var pivot_cell_world_before: Vector2i = position + pivot_cell_local_before
-
-#     for i in out_cells.size():
-#         out_cells[i] = rotate_cell(out_cells[i], direction)
-    
-#     var pivot_cell_local_after: Vector2i = out_cells[pivot_cell_index]
-#     var position_after = pivot_cell_world_before - pivot_cell_local_after
-
-#     return [out_cells, position_after]
-
-# func move_piece(direction: Direction, steps: int = 1) -> Vector2i:
-#     match direction:
-#         Direction.LEFT:
-#             return position + Vector2i(-steps, 0)
-#         Direction.RIGHT:
-#             return position + Vector2i(steps, 0)
-#         Direction.UP:
-#             return position + Vector2i(0, -steps)
-#         Direction.DOWN:
-#             return position + Vector2i(0, steps)
-#         _:
-#             push_error("Invalid Rotation Direction")
-#             return position
-
-        
 func update_cells_and_position(new_cells: Array[Vector2i], new_position: Vector2i) -> void:
     cells = new_cells.duplicate()
     position = new_position
@@ -164,3 +52,102 @@ func get_board_position() -> Array[Vector2i]:
     for cell in cells:
         board_position.append(Vector2i(cell[0] + position[0], cell[1] + position[1]))
     return board_position
+
+func try_rotate_srs(direction: Rotation, is_legal_function: Callable) -> bool:
+    # Rotation.TWICE not currently used
+    if direction == Rotation.TWICE:
+        return false
+
+    var from_state := rotation_state
+    var rotation_delta := 0
+    if direction == Rotation.RIGHT:
+        rotation_delta = 1
+    elif direction == Rotation.LEFT:
+        rotation_delta = 3
+    else:
+        return false
+    var to_state := (rotation_state + rotation_delta) % 4
+   
+    var rotated_cells := rotate_around_pivot(direction)
+    var kicks: Array[Vector2i] = get_kicks(from_state, to_state)
+
+    for k in kicks:
+        var test_pos: Vector2i = position + k
+        var world_cells: Array[Vector2i] = []
+        world_cells.resize(rotated_cells.size())
+
+        for i in rotated_cells.size():
+            world_cells[i] = test_pos + rotated_cells[i]
+        
+        if is_legal_function.call(world_cells):
+            cells = rotated_cells
+            position = test_pos
+            rotation_state = to_state
+            return true
+    return false
+
+
+func rotate_around_pivot(direction: Rotation) -> Array[Vector2i]:
+    var pivot: Vector2 = shape.pivot
+    var out: Array[Vector2i] = []
+    out.resize(cells.size())
+
+    for i in cells.size():
+        var cell_pos: Vector2 = Vector2(cells[i].x, cells[i].y)
+        var relative_pos: Vector2 = cell_pos - pivot
+
+        var rotation_relative: Vector2
+        if direction == Rotation.RIGHT:
+            rotation_relative = Vector2(relative_pos.y, -relative_pos.x)
+        elif direction == Rotation.LEFT:
+            rotation_relative = Vector2(-relative_pos.y, relative_pos.x)
+        elif direction == Rotation.TWICE:
+            rotation_relative = Vector2(-relative_pos.x, -relative_pos.y)
+        else:
+            push_error("Invalid rotation direction: %s" % [str(direction)])
+            rotation_relative = relative_pos
+        var rotated_cell_position: Vector2 = pivot + rotation_relative
+        out[i] = Vector2i(
+            int(round(rotated_cell_position.x)),
+            int(round(rotated_cell_position.y))
+        )
+    return out
+
+func get_kicks(from_state: int, to_state: int) -> Array[Vector2i]:
+    match shape.kick_profile:
+        PolyominoShape.KickProfile.I:
+            return kicks_I(from_state, to_state)
+        PolyominoShape.KickProfile.JLSTZ:
+            return kicks_JLSTZ(from_state, to_state)
+        PolyominoShape.KickProfile.O, PolyominoShape.KickProfile.NONE:
+            return [Vector2i(0, 0)]
+        PolyominoShape.KickProfile.GENERIC:
+            return [Vector2i(0, 0), Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, -1), Vector2i(0, 1)]
+        _:
+           return [Vector2i(0, 0)]
+
+func kicks_I(from_state: int, to_state: int) -> Array[Vector2i]:
+    var key := "%d>%d" % [from_state, to_state]
+    match key:
+        "0>1": return [Vector2i(0, 0), Vector2i(-2, 0), Vector2i(1, 0), Vector2i(-2, -1), Vector2i(1, 2)]
+        "1>0": return [Vector2i(0, 0), Vector2i(2, 0), Vector2i(-1, 0), Vector2i(2, 1), Vector2i(-1, -2)]
+        "1>2": return [Vector2i(0, 0), Vector2i(-1, 0), Vector2i(2, 0), Vector2i(-1, 2), Vector2i(2, -1)]
+        "2>1": return [Vector2i(0, 0), Vector2i(1, 0), Vector2i(-2, 0), Vector2i(1, -2), Vector2i(-2, 1)]
+        "2>3": return [Vector2i(0, 0), Vector2i(2, 0), Vector2i(-1, 0), Vector2i(2, 1), Vector2i(-1, -2)]
+        "3>2": return [Vector2i(0, 0), Vector2i(-2, 0), Vector2i(1, 0), Vector2i(-2, -1), Vector2i(1, 2)]
+        "3>0": return [Vector2i(0, 0), Vector2i(1, 0), Vector2i(-2, 0), Vector2i(1, -2), Vector2i(-2, 1)]
+        "0>3": return [Vector2i(0, 0), Vector2i(-1, 0), Vector2i(2, 0), Vector2i(-1, 2), Vector2i(2, -1)]
+        _: return [Vector2i(0, 0)]
+
+func kicks_JLSTZ(from_state: int, to_state: int) -> Array[Vector2i]:
+    var key := "%d>%d" % [from_state, to_state]
+    match key:
+        "0>1": return [Vector2i(0, 0), Vector2i(-1, 0), Vector2i(-1, 1), Vector2i(0, -2), Vector2i(-1, -2)]
+        "1>0": return [Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, -1), Vector2i(0, 2), Vector2i(1, 2)]
+        "1>2": return [Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, -1), Vector2i(0, 2), Vector2i(1, 2)]
+        "2>1": return [Vector2i(0, 0), Vector2i(-1, 0), Vector2i(-1, 1), Vector2i(0, -2), Vector2i(-1, -2)]
+        "2>3": return [Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, -2), Vector2i(1, -2)]
+        "3>2": return [Vector2i(0, 0), Vector2i(-1, 0), Vector2i(-1, -1), Vector2i(0, 2), Vector2i(-1, 2)]
+        "3>0": return [Vector2i(0, 0), Vector2i(-1, 0), Vector2i(-1, -1), Vector2i(0, 2), Vector2i(-1, 2)]
+        "0>3": return [Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, -2), Vector2i(1, -2)]
+        _: return [Vector2i(0, 0)]
