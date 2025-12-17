@@ -25,11 +25,14 @@ const OUTLINE_SOURCE = 0
 const FROZEN_SOURCE = 1
 const HIGHLIGHT_SOURCE = 1
 const INACTIVE_SOURCE = 0
+const CARDINAL_DIRS: Array[Vector2i] = [
+	Vector2i.RIGHT, Vector2i.LEFT, Vector2i.UP, Vector2i.DOWN
+]
 var active_piece: Piece
 var outline_piece: Piece
 var possible_pieces: Array[Piece]
 var pieces: Array[Piece]
-var frozen_blocks: Array[Vector2i]
+var frozen_blocks: Dictionary[Vector2i, bool] = {} # using Dict as a proxy for a Set
 
 
 func _ready() -> void:
@@ -50,17 +53,17 @@ func _ready() -> void:
 	
 
 	# test frozen blocks by adding 3 frozen layers
-	frozen_blocks = []
 	for x in range(level_data.width):
-		for y in range(level_data.height - 3, level_data.height):
-			frozen_blocks.append(Vector2i(x, y))
-	for cell in frozen_blocks:
-		frozen_layer.set_cell(cell, FROZEN_SOURCE, Vector2i(0, 0), 0)
+		for y in range(level_data.height - 1, level_data.height):
+			frozen_blocks[Vector2i(x, y)] = true
+	place_frozen_blocks()
+	# for cell in frozen_blocks:
+	# 	frozen_layer.set_cell(cell, FROZEN_SOURCE, Vector2i(0, 0), 0)
 
 	# test interfering cell
 	#frozen_layer.set_cell(Vector2i(3, 5), FROZEN_SOURCE, Vector2i(0, 0), 0)
 
-	
+
 func place_pieces() -> void:
 	for piece in pieces:
 		place_piece(piece)
@@ -72,9 +75,7 @@ func _initialise_board() -> void:
 	outline_layer = $OutlineLayer
 	frozen_layer = $FrozenLayer
 	inactive_outline_layer = $InactiveOutlineLayer
-
-	for i in range(len(level_data.shapes)):
-			possible_pieces.append(Piece.new(level_data.shapes[i], Vector2i(0, 0), i))
+	collect_possible_pieces()
 	place_background()
 
 func intialise_pieces():
@@ -83,10 +84,17 @@ func intialise_pieces():
 	initialise_outline_piece()
 	#highlight_pivot_cell()
 
+func collect_possible_pieces() -> void:
+	for i in range(len(level_data.shapes)):
+			possible_pieces.append(Piece.new(level_data.shapes[i], Vector2i(0, 0), i))
+
 func place_background() -> void:
 	for i in range(level_data.width):
 		for j in range(level_data.height):
 			background_layer.set_cell(Vector2i(i, j), BACKGROUND_SOURCE, Vector2i(0, 0), 0)
+
+func place_frozen_blocks() -> void:
+	place_cells(frozen_blocks.keys(), frozen_layer, FROZEN_SOURCE, 0)
 
 func place_piece(piece: Piece) -> void:
 	place_cells(piece.get_board_position(), pieces_layer, PIECE_SOURCE, piece.id)
@@ -145,6 +153,9 @@ func commit_move():
 	for piece in get_inactive_pieces():
 		piece.position.y += 1
 
+	# Freeze anything touching frozen
+	update_frozen_pieces()
+
 	# 3. Redraw all board layers
 
 	pieces_layer.clear()
@@ -153,6 +164,55 @@ func commit_move():
 
 	place_pieces() # <- draws active + all inactive pieces
 	intialise_pieces() # highlight, inactive outlines, active outline
+	place_frozen_blocks()
+
+func update_frozen_pieces() -> void:
+	var to_freeze: Array[Piece] = []
+	for piece in pieces:
+		if is_piece_touching_frozen_layer(piece):
+			to_freeze.append(piece)
+	var active_frozen := false
+	for piece in to_freeze:
+		if freeze_and_remove_piece(piece):
+			active_frozen = true
+	if active_frozen:
+		select_new_active_piece()
+
+func select_new_active_piece() -> void:
+	if pieces.is_empty():
+		active_piece = null
+		handle_no_pieces_remaining()
+		return
+
+	active_piece = pieces[0] # simplest rule
+	reset_rotation_translation_plan()
+	intialise_pieces()
+
+func handle_no_pieces_remaining() -> void:
+	print("No pieces remaining")
+	# temporary random piece selection
+	var new_piece: Piece = possible_pieces.pick_random().copy()
+	new_piece.position = Vector2i(0, 0)
+	pieces.append(new_piece)
+	active_piece = new_piece
+
+
+func freeze_and_remove_piece(piece: Piece) -> bool:
+	for cell in piece.get_board_position():
+		freeze_cell(cell)
+	pieces.erase(piece)
+
+	return piece == active_piece
+
+func is_piece_touching_frozen_layer(piece: Piece) -> bool:
+	for cell in piece.get_board_position():
+		# for dir in CARDINAL_DIRS:
+		# 	if is_frozen(cell + dir):
+		# 		return true
+		if is_frozen(cell + Vector2i.DOWN):
+			return true
+
+	return false
 
 func can_translate(dx: int, max_amount: int) -> bool:
 	# proposed new displacement from original column
@@ -353,3 +413,12 @@ func are_cells_legal(cells: Array[Vector2i]) -> bool:
 		if cell_occupied(cell):
 			return false
 	return true
+
+func freeze_cell(cell: Vector2i) -> void:
+	frozen_blocks[cell] = true
+
+func unfreeze_cell(cell: Vector2i) -> void:
+	frozen_blocks.erase(cell)
+
+func is_frozen(cell: Vector2i) -> bool:
+	return frozen_blocks.has(cell)
